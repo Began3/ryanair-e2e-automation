@@ -1,4 +1,4 @@
-class FunctionalTestWrapper {
+export default class FunctionalTestWrapper {
     static async run(testFn) {
         try {
             await testFn();
@@ -8,5 +8,3 @@ class FunctionalTestWrapper {
         }
     }
 }
-
-module.exports = FunctionalTestWrapper;
