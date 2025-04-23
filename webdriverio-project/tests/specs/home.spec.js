@@ -1,13 +1,16 @@
 import HomePage from '../../src/pages/home.page.js';
 import { loadEnv } from '../helpers/envHelper.js';
 import FunctionalTestWrapper from '../helpers/functionalTestWrapper.js';
+import BookingPage from '../../src/pages/booking.page.js';
 
 describe('Home Page Tests', () => {
     let homePage;
+    let bookingPage;
 
     before(async () => {
         loadEnv(); // Load environment variables
         homePage = new HomePage();
+        bookingPage = new BookingPage(); // Initialize BookingPage
     });
 
     it('should verify that the correct URL is loaded', async () => {
@@ -69,6 +72,46 @@ describe('Home Page Tests', () => {
     
             // Click the search button
             await homePage.clickSearchButton();
+        });
+    });
+
+    it('should complete the booking process with 2 passengers', async () => {
+        await FunctionalTestWrapper.run(async () => {
+            // Select departure and return flights
+            await bookingPage.selectDepartureFlight();
+            await bookingPage.selectReturnFlight();
+
+            // Select flights and choose a fare
+            await bookingPage.chooseRegularFare();
+
+            // Check if the passengers section is disabled
+            const isDisabled = await bookingPage.isPassengersSectionDisabled();
+            expect(isDisabled).toBe(true);
+
+            // Handle the "Log in to myRyanair" section
+            await bookingPage.clickLoginLater();
+
+            // Add 2 passengers
+            const passengers = [
+                { title: 'Mr', firstName: 'John', lastName: 'Doe' },
+                { title: 'Ms', firstName: 'Jane', lastName: 'Smith' }
+            ];
+            await bookingPage.addPassengers(passengers);
+
+            // Click continue
+            await bookingPage.clickContinue();
+
+            // Choose seats for 2 passengers
+            await bookingPage.chooseSeats(2);
+
+            // Proceed to the next flight section
+            await bookingPage.clickNextFlight();
+
+            // Choose seats for the return flight
+            await bookingPage.chooseSeats(2);
+
+            // Click continue
+            await bookingPage.clickContinue();
         });
     });
 });
