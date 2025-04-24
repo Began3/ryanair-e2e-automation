@@ -8,19 +8,20 @@ This project is a WebdriverIO setup that uses Mocha (JavaScript) as the test fra
 webdriverio-project
 ├── src
 │   ├── pages
-│       ├── base.page.js
-│       └── home.page.js
-│
+│   │   ├── base.page.js       # Base class for all pages
+│   │   └── home.page.js       # Page object for the home page
+│   └── helpers
+│       └── envHelper.js       # Helper for managing environment variables
 ├── tests
 │   ├── specs
-│   │   └── home.spec.js
-│   └── helpers
-│       └── envHelper.js
-├── .env
-├── wdio.conf.js
-├── package.json
-├── README.md
-└── .gitignore
+│   │   └── home.spec.js       # Test file for the home page
+│   └── allure-results         # Directory for Allure test results
+├── .env                       # Environment variables file
+├── wdio.conf.ts               # WebdriverIO configuration file
+├── package.json               # Project dependencies and scripts
+├── tsconfig.json              # TypeScript configuration file
+├── README.md                  # Project documentation
+└── .gitignore                 # Files and directories to ignore in Git
 ```
 
 ## Setup Instructions
@@ -42,7 +43,7 @@ webdriverio-project
 4. **Run tests:**
    Use the following command to run the tests:
    ```
-   npx wdio wdio.conf.js
+   npm run test
    ```
 
 ## Usage Examples
