@@ -3,6 +3,7 @@ import BasePage from './base.page.js';
 class BookingPage extends BasePage {
     constructor() {
         super();
+        // Define all selectors used in this page
         this.selectors = {
             flightDetailsSelector: '.details__header--left.ng-tns-c767722289-1', // Main flight details container
             departureLocationSelector: '.button.flight-card-summary__select-btn.ng-tns-c511344216-26.ry-button--gradient-blue', // Departure location
@@ -17,93 +18,160 @@ class BookingPage extends BasePage {
             firstNameInputSelector: '[name="form.passengers.ADT-0.name"]', // First name input
             lastNameInputSelector: '[name="form.passengers.ADT-0.surname"]', // Last name input
             continueButtonSelector: 'button.continue-flow__button*=Continue', // Continue button
-            seatButtonSelector: 'seat-03A', // Seat selection button
-            nextFlightButtonSelector: 'seat-03A', // Next flight button
+            nextFlightButtonSelector: 'button.passenger-carousel__cta*=Next flight', // Next flight button
+            noThanksReserveSeatsSelector: '[class="_container icon-16"]', // No thanks button for reserving the same seats
             passengerSummarySelector: '.passenger-summary', // Passenger summary
-            selectedSeatsSelector: '.selected-seat', // Selected seats
+            finalContinueButtonSelector: 'button*=Continue', // Final Continue button
         };
     }
 
+    // Select the departure flight
     async selectDepartureFlight() {
         const departureFlight = await $(this.selectors.departureFlightSelector);
-        await departureFlight.waitForClickable();
-        await departureFlight.click();
+        await departureFlight.waitForClickable(); // Wait until the button is clickable
+        await departureFlight.click(); // Click the departure flight button
     }
 
+    // Select the return flight
     async selectReturnFlight() {
         const returnFlight = await $(this.selectors.returnFlightSelector);
-        await returnFlight.waitForClickable();
-        await returnFlight.click();
+        await returnFlight.waitForClickable(); // Wait until the button is clickable
+        await returnFlight.click(); // Click the return flight button
     }
 
+    // Choose the regular fare option
     async chooseRegularFare() {
         const regularFareButton = await $(this.selectors.regularFareButtonSelector);
-        await regularFareButton.waitForClickable();
-        await regularFareButton.click();
+        await regularFareButton.waitForClickable(); // Wait until the button is clickable
+        await regularFareButton.click(); // Click the regular fare button
     }
 
+    // Check if the passengers section is disabled
     async isPassengersSectionDisabled() {
         const passengersSection = await $(this.selectors.passengersSectionSelector);
-        const isDisabled = await passengersSection.getAttribute('class');
-        return isDisabled !== null;
+        const isDisabled = await passengersSection.getAttribute('class'); // Check the class attribute
+        return isDisabled !== null; // Return true if the section is disabled
     }
 
+    // Click the "Log in later" button
     async clickLoginLater() {
         const loginLaterButton = await $(this.selectors.loginLaterButtonSelector);
-        await loginLaterButton.waitForClickable();
-        await loginLaterButton.click();
+        await loginLaterButton.waitForClickable(); // Wait until the button is clickable
+        await loginLaterButton.click(); // Click the "Log in later" button
     }
 
+    // Add passenger details
     async addPassengers(passengers) {
         for (let i = 0; i < passengers.length; i++) {
-            // Dynamically construct selectors for each passenger
             const firstNameInputSelector = `[name="form.passengers.ADT-${i}.name"]`;
             const lastNameInputSelector = `[name="form.passengers.ADT-${i}.surname"]`;
-    
-            // Locate the input fields for the current passenger
+
             const titleDropdown = await $$(this.selectors.titleDropdownSelector)[i];
             const firstNameInput = await $(firstNameInputSelector);
             const lastNameInput = await $(lastNameInputSelector);
-    
-            // Ensure the input fields exist for the current passenger
+
             if (titleDropdown && firstNameInput && lastNameInput) {
-                // Click the title dropdown
-                await titleDropdown.click();
-    
-                // Select the title from the dropdown menu
+                await titleDropdown.click(); // Open the title dropdown
                 const titleOption = await $(`button*= ${passengers[i].title}`);
-                await titleOption.click();
-    
-                // Set the first and last names
-                await firstNameInput.setValue(passengers[i].firstName);
-                await lastNameInput.setValue(passengers[i].lastName);
+                await titleOption.click(); // Select the title
+                await firstNameInput.setValue(passengers[i].firstName); // Enter the first name
+                await lastNameInput.setValue(passengers[i].lastName); // Enter the last name
             } else {
                 console.warn(`Input fields for passenger at index ${i} are missing or not rendered.`);
             }
         }
     }
+
+    // Click the "Continue" button
     async clickContinue() {
         const continueButton = await $(this.selectors.continueButtonSelector);
-        await continueButton.waitForClickable();
-        await continueButton.click();
+        await continueButton.waitForClickable(); // Wait until the button is clickable
+        await continueButton.click(); // Click the "Continue" button
     }
 
-    async chooseSeats(seatCount) {
-        for (let i = 0; i < seatCount; i++) {
-            // Dynamically construct the seat selector based on the index
-            const seatId = `seat-03${String.fromCharCode(65 + i)}`; // 'A', 'B', 'C', etc.
-            const seatButton = await $(`#${seatId}`);
-    
-            // Wait for the seat button to be clickable and click it
-            await seatButton.waitForClickable();
-            await seatButton.click();
+    // Choose a random seat from the seat map
+    async chooseRandomSeat() {
+        // Generate the seat map dynamically
+        const seatMap = [];
+        const rows = Array.from({ length: 34 }, (_, i) => (i + 2).toString().padStart(2, '0')); // Rows 02 to 35
+        const columns = ['A', 'B', 'C', 'D', 'E', 'F']; // Columns A to F
+
+        rows.forEach(row => {
+            columns.forEach(column => {
+                seatMap.push(`#seat-${row}${column}`);
+            });
+        });
+
+        let seatSelected = false;
+        const timeout = 10000; // Timeout in milliseconds (10 seconds)
+        const startTime = Date.now();
+
+        while (!seatSelected && seatMap.length > 0) {
+            // Check if the timeout has been reached
+            if (Date.now() - startTime > timeout) {
+                throw new Error('Timeout reached while attempting to select a seat.');
+            }
+
+            // Pick a random seat from the seat map
+            const randomIndex = Math.floor(Math.random() * seatMap.length);
+            const randomSeatSelector = seatMap[randomIndex];
+
+            try {
+                const seat = await $(randomSeatSelector);
+                if (await seat.isClickable()) {
+                    await seat.waitForClickable({ timeout: 5000 });
+                    await seat.click(); // Click the seat
+                    console.log(`Seat ${randomSeatSelector} selected.`);
+                    seatSelected = true;
+                } else {
+                    console.warn(`Seat ${randomSeatSelector} is not clickable. Removing from seat map.`);
+                    seatMap.splice(randomIndex, 1); // Remove the seat from the map
+                }
+            } catch (error) {
+                console.error(`Error selecting seat ${randomSeatSelector}:`, error);
+                seatMap.splice(randomIndex, 1); // Remove the seat from the map
+            }
+        }
+
+        if (!seatSelected) {
+            throw new Error('No available seats could be selected.');
         }
     }
 
+    // Click the "Next Flight" button
     async clickNextFlight() {
         const nextFlightButton = await $(this.selectors.nextFlightButtonSelector);
-        await nextFlightButton.waitForClickable();
-        await nextFlightButton.click();
+        await nextFlightButton.waitForDisplayed({ timeout: 10000 }); // Wait for the button to be displayed
+        await nextFlightButton.waitForClickable({ timeout: 10000 }); // Wait for the button to be clickable
+        await nextFlightButton.click(); // Click the "Next Flight" button
+        console.log('Next flight button clicked.');
+    }
+
+    // Click the "No Thanks" button for reserving seats
+    async clickNoThanksReserveSeats() {
+        const noThanksButton = await $(this.selectors.noThanksReserveSeatsSelector);
+
+        // Wait for the button to be displayed
+        await noThanksButton.waitForDisplayed({ timeout: 30000 });
+
+        // Ensure the button is clickable
+        await noThanksButton.waitForClickable({ timeout: 30000 });
+
+        // Scroll into view if necessary
+        await noThanksButton.scrollIntoView();
+
+        // Click the button
+        await noThanksButton.click();
+        console.log('No thanks button clicked.');
+    }
+
+    // Click the final "Continue" button
+    async clickFinalContinue() {
+        const finalContinueButton = await $(this.selectors.finalContinueButtonSelector);
+        await finalContinueButton.waitForDisplayed({ timeout: 10000 }); // Wait for the button to be displayed
+        await finalContinueButton.waitForClickable({ timeout: 10000 }); // Wait for the button to be clickable
+        await finalContinueButton.click(); // Click the final "Continue" button
+        console.log('Final continue button clicked.');
     }
 }
 

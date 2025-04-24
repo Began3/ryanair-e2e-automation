@@ -23,7 +23,6 @@ describe('Home Page Tests', () => {
 
     it('should click the button and perform the action', async () => {
         await FunctionalTestWrapper.run(async () => {
-            await homePage.navigateTo(process.env.BASE_URL); // Navigate to the base URL from environment variables
             await homePage.clickButton();
             // Add assertions to verify the action performed after button click
             console.log('Button clicked successfully');
@@ -76,42 +75,63 @@ describe('Home Page Tests', () => {
     });
 
     it('should complete the booking process with 2 passengers', async () => {
-        await FunctionalTestWrapper.run(async () => {
-            // Select departure and return flights
-            await bookingPage.selectDepartureFlight();
-            await bookingPage.selectReturnFlight();
+    await FunctionalTestWrapper.run(async () => {
+        // Select departure and return flights
+        await bookingPage.selectDepartureFlight();
+        await bookingPage.selectReturnFlight();
 
-            // Select flights and choose a fare
-            await bookingPage.chooseRegularFare();
+        // Select flights and choose a fare
+        await bookingPage.chooseRegularFare();
 
-            // Check if the passengers section is disabled
-            const isDisabled = await bookingPage.isPassengersSectionDisabled();
-            expect(isDisabled).toBe(true);
+        // Check if the passengers section is disabled
+        const isDisabled = await bookingPage.isPassengersSectionDisabled();
+        expect(isDisabled).toBe(true);
 
-            // Handle the "Log in to myRyanair" section
-            await bookingPage.clickLoginLater();
+        // Handle the "Log in to myRyanair" section
+        await bookingPage.clickLoginLater();
 
-            // Add 2 passengers
-            const passengers = [
-                { title: 'Mr', firstName: 'John', lastName: 'Doe' },
-                { title: 'Ms', firstName: 'Jane', lastName: 'Smith' }
-            ];
-            await bookingPage.addPassengers(passengers);
+        // Add 2 passengers
+        const passengers = [
+            { title: 'Mr', firstName: 'John', lastName: 'Doe' },
+            { title: 'Ms', firstName: 'Jane', lastName: 'Smith' }
+        ];
+        await bookingPage.addPassengers(passengers);
 
-            // Click continue
-            await bookingPage.clickContinue();
+        // Click continue
+        await bookingPage.clickContinue();
 
-            // Choose seats for 2 passengers
-            await bookingPage.chooseSeats(2);
+        // Choose seats for 2 passengers (randomized)
+        let successfulSeats = 0;
+        while (successfulSeats < 2) {
+            try {
+                await bookingPage.chooseRandomSeat();
+                successfulSeats++;
+                console.log(`Successfully selected seat ${successfulSeats}`);
+            } catch (error) {
+                console.warn('Failed to select a seat. Retrying...');
+            }
+        }
 
-            // Proceed to the next flight section
-            await bookingPage.clickNextFlight();
+        // Proceed to the next flight section
+        await bookingPage.clickNextFlight();
 
-            // Choose seats for the return flight
-            await bookingPage.chooseSeats(2);
+        // Click "No thanks" for reserving the same seats
+        await bookingPage.clickNoThanksReserveSeats();
 
-            // Click continue
-            await bookingPage.clickContinue();
-        });
+        // Choose seats for the return flight (randomized)
+        successfulSeats = 0; // Reset the counter for the return flight
+        while (successfulSeats < 2) {
+            try {
+                await bookingPage.chooseRandomSeat();
+                successfulSeats++;
+                console.log(`Successfully selected seat ${successfulSeats}`);
+            } catch (error) {
+                console.warn('Failed to select a seat. Retrying...');
+            }
+        }
+
+        // Click final continue
+        await bookingPage.clickFinalContinue();
     });
+});
 });
